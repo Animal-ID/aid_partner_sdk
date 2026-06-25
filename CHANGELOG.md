@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-06-25
+
+### Added
+
+- Запити доступу до тварини: `animals()->requestAccess($id)` (POST) і `animals()->accessStatus($id)` (GET) з типізованим станом `Model\AnimalAccessRequest` (`granted`/`pending`/`denied`/`none`, `retryAfterSeconds`, `isGranted()` тощо).
+- Прапорці доступу на картці тварини: `Animal::getAbilities()` і зручний `Animal::canEdit()` (`abilities.can_edit`).
+- Розгортання `owners` для пошуку тварин через `$expand` (`AnimalsResource::EXPAND_OWNERS`); `Animal::getOwners()` повертає `Model\AnimalOwner[]` з `is_main_owner`.
+- Прийом вебхуків: `Webhook\WebhookVerifier` (`constructEvent()` — перевірка підпису + timestamp, `verify()`, `parse()`) і `Webhook\WebhookEvent` із типізованими аксесорами для подій `animal_access.*`. Захист від replay (толеранс за замовчуванням 300с, налаштовуваний). `Exception\WebhookVerificationException`.
+
 ## [1.0.0] — 2026-06-13
 
 ### Added

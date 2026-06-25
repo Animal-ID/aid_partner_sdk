@@ -54,6 +54,12 @@ final class Animal
 	/** @var int|null */
 	private $status;
 
+	/** @var array<string, mixed>|null Per-animal access flags for the authenticated partner user. */
+	private $abilities;
+
+	/** @var list<AnimalOwner>|null Embedded owners — present only with the `owners` expand. */
+	private $owners;
+
 	/** @var array<string, mixed> Raw payload for forward compatibility. */
 	private $raw;
 
@@ -84,9 +90,34 @@ final class Animal
 		$animal->deceased = (bool)($data['deceased'] ?? false);
 		$animal->diedAt = isset($data['died_at']) ? (string)$data['died_at'] : null;
 		$animal->status = isset($data['status']) ? (int)$data['status'] : null;
+		$animal->abilities = isset($data['abilities']) && is_array($data['abilities'])
+			? $data['abilities']
+			: null;
+		$animal->owners = self::mapOwners($data);
 		$animal->raw = $data;
 
 		return $animal;
+	}
+
+	/**
+	 * @param array<string, mixed> $data
+	 *
+	 * @return list<AnimalOwner>|null
+	 */
+	private static function mapOwners(array $data): ?array
+	{
+		if (!isset($data['owners']) || !is_array($data['owners'])) {
+			return null;
+		}
+
+		$owners = [];
+		foreach ($data['owners'] as $owner) {
+			if (is_array($owner)) {
+				$owners[] = AnimalOwner::fromArray($owner);
+			}
+		}
+
+		return $owners;
 	}
 
 	public function getId(): string
@@ -167,6 +198,40 @@ final class Animal
 	public function getStatus(): ?int
 	{
 		return $this->status;
+	}
+
+	/**
+	 * Per-animal access flags for the authenticated partner user, or null when the endpoint did
+	 * not include them.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public function getAbilities(): ?array
+	{
+		return $this->abilities;
+	}
+
+	/**
+	 * Whether the authenticated partner user may edit this animal (update data, add procedures,
+	 * manage photos). Null when the endpoint did not expose `abilities`.
+	 */
+	public function canEdit(): ?bool
+	{
+		if ($this->abilities === null || !array_key_exists('can_edit', $this->abilities)) {
+			return null;
+		}
+
+		return (bool)$this->abilities['can_edit'];
+	}
+
+	/**
+	 * The animal's owners, present only when requested via the `owners` expand; null otherwise.
+	 *
+	 * @return list<AnimalOwner>|null
+	 */
+	public function getOwners(): ?array
+	{
+		return $this->owners;
 	}
 
 	/**

@@ -251,6 +251,80 @@ echo $photo->getId(); // 33015
 $client->photos()->delete($animalId, $photo->getId());
 ```
 
+### Запити доступу до тварини
+
+Оновлення даних, додавання процедур і зміна фото потребують доступу до тварини (ви її власник або ветеринар із активним звʼязком). Без доступу API відповідає `403` (`AccessDeniedException`). Запросіть доступ — власник підтвердить його у кабінеті:
+
+```php
+use AnimalId\PartnerSdk\Resource\AnimalsResource;
+
+// Запит доступу (POST). status: granted | pending | denied.
+$state = $client->animals()->requestAccess($animalId);
+if ($state->isPending()) {
+    // власника сповіщено; повторний запит — не раніше ніж через getRetryAfterSeconds()
+}
+
+// Перевірка поточного стану (GET). status: granted | pending | denied | none.
+$status = $client->animals()->accessStatus($animalId);
+if ($status->isGranted()) {
+    $client->animals()->update($animalId, ['nickname' => 'Барсік']);
+}
+```
+
+Рішення власника надходить вебхуком (`animal_access.approved` / `animal_access.denied`) — див. розділ «Вебхуки».
+
+### Прапорці доступу та власники (expand)
+
+Кожна картка тварини несе `abilities.can_edit`; під час пошуку можна вбудувати власників через `expand`:
+
+```php
+$animal = $client->animals()->get($animalId, [AnimalsResource::EXPAND_OWNERS]);
+
+$animal->canEdit();      // bool|null — чи можете редагувати цю тварину
+foreach ($animal->getOwners() ?? [] as $owner) {
+    $owner->getUserGid();
+    $owner->isMainOwner();
+}
+```
+
+---
+
+## Вебхуки
+
+Animal ID надсилає підписані `POST`-запити на ваш webhook URL (налаштовується там, де ви отримуєте API-ключі), коли стається відкладена подія — наприклад, власник погодив або відхилив запит ветеринара на доступ.
+
+`Webhook\WebhookVerifier` перевіряє підпис і timestamp та повертає типізовану подію. Підпис рахується тим самим алгоритмом, що й ваші запити, але ключем є **окремий webhook-секрет** (показується один раз у кабінеті):
+
+```php
+use AnimalId\PartnerSdk\Webhook\WebhookVerifier;
+use AnimalId\PartnerSdk\Exception\WebhookVerificationException;
+
+$verifier = new WebhookVerifier(getenv('AID_WEBHOOK_SECRET')); // толеранс replay = 300с
+
+try {
+    $event = $verifier->constructEvent(
+        file_get_contents('php://input'), // точні байти тіла
+        $_SERVER,                          // або getallheaders()
+        $_SERVER['REQUEST_URI']            // шлях вашого webhook URL, як отримано
+    );
+} catch (WebhookVerificationException $e) {
+    http_response_code(401);
+    exit;
+}
+
+if ($event->isAccessApproved()) {
+    $event->getAnimalId();          // public_id тварини
+    $event->getRequesterUserGid();  // gid ветеринара
+}
+
+http_response_code(204); // підтвердьте будь-яким 2xx
+```
+
+- `constructEvent()` кидає `WebhookVerificationException` при невалідному підписі, простроченому timestamp або зіпсованому тілі.
+- `verify(...): bool` — булева форма; `parse(...): WebhookEvent` — лише декодування без перевірки.
+- Вимкнути перевірку часу: `new WebhookVerifier($secret, 0)`.
+- Невдалі доставки можна повторно надіслати з кабінету (журнал доставок).
+
 ---
 
 ## Ідемпотентність і безпечні повтори
