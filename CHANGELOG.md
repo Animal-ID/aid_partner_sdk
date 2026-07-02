@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [1.0.2] — 2026-07-02
+
+### Changed
+
+- Задокументовано актуальну форму відповіді `POST /animals/{id}/procedures`: API тепер повертає ту саму partner-картку процедури, що й `GET` (`type` / `occurred_at` / `visit_id` / `type_specific_payload`, публічний `animal_id`). `Procedure::fromArray()` і надалі нормалізує застарілу внутрішню форму (`procedure_type_id` / `performed_at` / `extra_fields`) для сумісності зі старими версіями gateway — поведінка SDK не змінилася.
+- Пакетний запис процедур масивом (`procedures()->create($id, [...])`) працює на актуальному gateway: виправлено ваду API, через яку тіло-масив відхилялося з помилкою 422 "The procedures field is required" (вада була на боці сервера, не SDK).
+
 ## [1.0.1] — 2026-06-25
 
 ### Added
@@ -36,5 +43,7 @@
 - Тести PHPUnit 9 (108 тестів, покриття ~99% рядків), перевірено на PHP 7.3 та 8.3.
 - `Dockerfile` для запуску composer/phpunit без локального PHP.
 
-[Unreleased]: https://github.com/animalid/partner-sdk/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/animalid/partner-sdk/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/animalid/partner-sdk/compare/v1.0.1...v1.0.2
+[1.0.1]: https://github.com/animalid/partner-sdk/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/animalid/partner-sdk/releases/tag/v1.0.0

@@ -27,7 +27,7 @@ final class ProceduresResourceTest extends TestCase
 
     public function testCreatePostsBatchAndMapsResult(): void
     {
-        // Shape taken from the partner-api-docs example response.
+        // POST returns the same partner card as GET (partner-api-docs example response).
         $this->http->queueJson(201, [
             'payload' => [
                 'appointment_id' => 7741,
@@ -35,11 +35,12 @@ final class ProceduresResourceTest extends TestCase
                     [
                         'id' => 99001,
                         'animal_id' => '8xK3pQzVnB7rL2qF',
-                        'appointment_id' => 7741,
-                        'procedure_type_id' => 10,
-                        'performed_at' => 1748592000,
+                        'visit_id' => 7741,
+                        'type' => 10,
+                        'occurred_at' => '2026-05-30T08:00:00+00:00',
+                        'summary' => 'Annual shot',
                         'revaccination_date' => '2027-05-30',
-                        'extra_fields' => ['vaccine_name' => 'Nobivac', 'batch_number' => 'A123'],
+                        'type_specific_payload' => ['vaccine_name' => 'Nobivac', 'batch_number' => 'A123'],
                     ],
                 ],
             ],
@@ -68,10 +69,47 @@ final class ProceduresResourceTest extends TestCase
         $procedure = $result->getProcedures()[0];
         self::assertSame(99001, $procedure->getId());
         self::assertSame('8xK3pQzVnB7rL2qF', $procedure->getAnimalId());
-        self::assertSame(7741, $procedure->getAppointmentId());
+        self::assertSame(7741, $procedure->getAppointmentId(), 'visit_id is normalized to appointmentId');
+        self::assertSame(10, $procedure->getType());
+        self::assertSame('2026-05-30T08:00:00+00:00', $procedure->getOccurredAt());
+        self::assertSame('Annual shot', $procedure->getSummary());
+        self::assertSame('2027-05-30', $procedure->getRevaccinationDate());
+        self::assertSame(
+            ['vaccine_name' => 'Nobivac', 'batch_number' => 'A123'],
+            $procedure->getTypeSpecificPayload()
+        );
+    }
+
+    public function testCreateMapsLegacyInfoShapedResponse(): void
+    {
+        // Older gateways answered POST with the internal shape — still normalized.
+        $this->http->queueJson(201, [
+            'payload' => [
+                'appointment_id' => 7741,
+                'procedures' => [
+                    [
+                        'id' => 99001,
+                        'animal_id' => '8xK3pQzVnB7rL2qF',
+                        'appointment_id' => 7741,
+                        'procedure_type_id' => 10,
+                        'performed_at' => 1748592000,
+                        'revaccination_date' => '2027-05-30',
+                        'extra_fields' => ['vaccine_name' => 'Nobivac', 'batch_number' => 'A123'],
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $this->procedures->create('8xK3pQzVnB7rL2qF', [
+            [
+                'type' => ProceduresResource::TYPE_VACCINATION,
+                'occurred_at' => '2026-05-30T08:00:00+00:00',
+            ],
+        ]);
+
+        $procedure = $result->getProcedures()[0];
         self::assertSame(10, $procedure->getType(), 'procedure_type_id is normalized to type');
         self::assertSame(1748592000, $procedure->getOccurredAt(), 'performed_at is normalized to occurredAt');
-        self::assertSame('2027-05-30', $procedure->getRevaccinationDate());
         self::assertSame(
             ['vaccine_name' => 'Nobivac', 'batch_number' => 'A123'],
             $procedure->getTypeSpecificPayload(),

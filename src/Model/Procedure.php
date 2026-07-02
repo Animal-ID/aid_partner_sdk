@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace AnimalId\PartnerSdk\Model;
 
 /**
- * Procedure record. Normalizes the two payload shapes returned by the API:
- * POST uses procedure_type_id / performed_at / extra_fields, while
- * GET uses type / occurred_at / type_specific_payload.
+ * Procedure record. The API returns the same partner card everywhere
+ * (type / occurred_at / visit_id / type_specific_payload); older gateways
+ * answered POST with an internal shape (procedure_type_id / performed_at /
+ * extra_fields), which fromArray() still normalizes for compatibility.
  */
 final class Procedure
 {
@@ -23,7 +24,7 @@ final class Procedure
 	/** @var int|null Procedure catalogue id (procedure_types dictionary). */
 	private $type;
 
-	/** @var string|int|null ISO 8601 string (GET) or Unix seconds (POST), as returned. */
+	/** @var string|int|null ISO 8601 string; Unix seconds only from the legacy POST shape. */
 	private $occurredAt;
 
 	/** @var string|null */
