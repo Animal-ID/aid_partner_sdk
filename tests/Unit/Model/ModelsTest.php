@@ -64,14 +64,15 @@ final class ModelsTest extends TestCase
 
     public function testProcedureNormalizesBothPayloadShapes(): void
     {
-        $fromPost = Procedure::fromArray([
+        // Legacy internal shape (POST on older gateways) vs the current partner card.
+        $legacy = Procedure::fromArray([
             'id' => 1,
             'appointment_id' => 7,
             'procedure_type_id' => 20,
             'performed_at' => 1748592000,
             'extra_fields' => ['vaccine_name' => 'Rabisin'],
         ]);
-        $fromGet = Procedure::fromArray([
+        $card = Procedure::fromArray([
             'id' => 1,
             'visit_id' => 7,
             'type' => 20,
@@ -79,14 +80,14 @@ final class ModelsTest extends TestCase
             'type_specific_payload' => ['vaccine_name' => 'Rabisin'],
         ]);
 
-        self::assertSame(7, $fromPost->getAppointmentId());
-        self::assertSame(7, $fromGet->getAppointmentId());
-        self::assertSame(20, $fromPost->getType());
-        self::assertSame(20, $fromGet->getType());
-        self::assertSame(1748592000, $fromPost->getOccurredAt());
-        self::assertSame('2026-05-30T08:00:00+00:00', $fromGet->getOccurredAt());
-        self::assertSame(['vaccine_name' => 'Rabisin'], $fromPost->getTypeSpecificPayload());
-        self::assertSame(['vaccine_name' => 'Rabisin'], $fromGet->getTypeSpecificPayload());
+        self::assertSame(7, $legacy->getAppointmentId());
+        self::assertSame(7, $card->getAppointmentId());
+        self::assertSame(20, $legacy->getType());
+        self::assertSame(20, $card->getType());
+        self::assertSame(1748592000, $legacy->getOccurredAt());
+        self::assertSame('2026-05-30T08:00:00+00:00', $card->getOccurredAt());
+        self::assertSame(['vaccine_name' => 'Rabisin'], $legacy->getTypeSpecificPayload());
+        self::assertSame(['vaccine_name' => 'Rabisin'], $card->getTypeSpecificPayload());
     }
 
     public function testProcedureDefaults(): void
