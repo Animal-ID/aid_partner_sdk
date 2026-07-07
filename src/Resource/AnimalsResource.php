@@ -29,6 +29,11 @@ final class AnimalsResource extends AbstractResource
 	 *
 	 * Required: species, nickname, is_microchip (+ microchip when is_microchip is true).
 	 *
+	 * Optionally attach owners via `owners[]` (the first becomes the main owner). Each entry is
+	 * either `['public_id' => 'V1StGXR8...']` to attach an existing owner (from {@see OwnersResource::search()}),
+	 * or inline `['email' => ..., 'consent' => ['account_creation' => true]]` to register a new one.
+	 * `public_id` attachment requires API version >= 2026-07-04, which this SDK sends by default.
+	 *
 	 * @param array<string, mixed> $animal
 	 * @param string|null $idempotencyKey Your own key for safe retries; auto-generated when null.
 	 */

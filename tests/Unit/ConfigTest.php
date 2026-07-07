@@ -18,7 +18,7 @@ final class ConfigTest extends TestCase
         self::assertSame('pk_x', $config->getPublicKey());
         self::assertSame('sk_x', $config->getPrivateKey());
         self::assertSame(Config::DEFAULT_BASE_URL, $config->getBaseUrl());
-        self::assertNull($config->getApiVersion());
+        self::assertSame(Config::DEFAULT_API_VERSION, $config->getApiVersion());
         self::assertSame(Config::DEFAULT_TIMEOUT, $config->getTimeout());
         self::assertSame(Config::DEFAULT_CONNECT_TIMEOUT, $config->getConnectTimeout());
     }
