@@ -66,7 +66,9 @@ $config = new Config(
     'sk_xxx',
     'https://gw.animal-id.net',      // базовий URL шлюзу (default)
     [
-        'api_version' => '2026-05-30', // зафіксувати версію API (заголовок X-Eternity-Animal-ID-Version)
+        // Зафіксувати версію API (заголовок X-Eternity-Animal-ID-Version). За замовчуванням SDK
+        // надсилає 2026-07-04 — з цієї версії власник у реєстрації прив'язується за public_id.
+        'api_version' => '2026-07-04',
         'timeout' => 15,               // загальний таймаут запиту, сек (default 30)
         'connect_timeout' => 5,        // таймаут з'єднання, сек (default 10)
     ]
@@ -126,7 +128,8 @@ $owner = $client->owners()->create([
     ],
 ]);
 
-echo $owner->getUserGid();      // 90231 — глобальний id, передається у реєстрацію тварини
+echo $owner->getPublicId();     // "V1StGXR8..." — стабільний ідентифікатор власника для реєстрації тварини
+echo $owner->getUserGid();      // 90231 — легасі числовий id (для старих версій API)
 echo $owner->hasAccount();      // чи вже має робочий акаунт
 echo $owner->getDisplayHint();  // маскована назва без PII, напр. "Ол*** К."
 
@@ -155,7 +158,7 @@ $animalId = $client->animals()->create([
     'dob' => '2022-03-01T00:00:00+00:00',
     'sterilization' => true,
     'owners' => [
-        ['user_gid' => 90231],           // прив'язати існуючого власника...
+        ['public_id' => 'V1StGXR8...'],  // прив'язати існуючого власника за public_id (з owners()->search())...
         [                                // ...або зареєструвати нового "інлайн"
             'email' => 'jane@example.com',
             'first_name' => 'Jane',
@@ -282,7 +285,8 @@ $animal = $client->animals()->get($animalId, [AnimalsResource::EXPAND_OWNERS]);
 
 $animal->canEdit();      // bool|null — чи можете редагувати цю тварину
 foreach ($animal->getOwners() ?? [] as $owner) {
-    $owner->getUserGid();
+    $owner->getPublicId();   // стабільний ідентифікатор власника (для реєстрації інших тварин)
+    $owner->getUserGid();    // легасі числовий id
     $owner->isMainOwner();
 }
 ```

@@ -74,7 +74,7 @@ final class OwnersResourceTest extends TestCase
 
     public function testSearchSendsQueryAndMapsOwner(): void
     {
-        $this->http->queueJson(200, ['payload' => ['user_gid' => 90231, 'has_account' => true]]);
+        $this->http->queueJson(200, ['payload' => ['user_gid' => 90231, 'public_id' => 'V1StGXR8Z5jd', 'has_account' => true]]);
 
         $owner = $this->owners->search('jane@example.com');
 
@@ -85,6 +85,7 @@ final class OwnersResourceTest extends TestCase
             $request->getUrl()
         );
         self::assertSame(90231, $owner->getUserGid());
+        self::assertSame('V1StGXR8Z5jd', $owner->getPublicId());
     }
 
     public function testSearchPropagatesNotFound(): void

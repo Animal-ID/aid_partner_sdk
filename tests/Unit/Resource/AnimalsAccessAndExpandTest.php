@@ -71,7 +71,7 @@ final class AnimalsAccessAndExpandTest extends TestCase
 			'nickname'  => 'Барсік',
 			'abilities' => ['can_edit' => true],
 			'owners'    => [
-				['user_gid' => 90231, 'is_main_owner' => true, 'display_hint' => 'Ja*** D.', 'country_id' => '804'],
+				['user_gid' => 90231, 'public_id' => 'V1StGXR8Z5jd', 'is_main_owner' => true, 'display_hint' => 'Ja*** D.', 'country_id' => '804'],
 				['user_gid' => 90232, 'is_main_owner' => false],
 			],
 		]]);
@@ -88,6 +88,8 @@ final class AnimalsAccessAndExpandTest extends TestCase
 		self::assertNotNull($owners);
 		self::assertCount(2, $owners);
 		self::assertSame(90231, $owners[0]->getUserGid());
+		self::assertSame('V1StGXR8Z5jd', $owners[0]->getPublicId());
+		self::assertNull($owners[1]->getPublicId());
 		self::assertTrue($owners[0]->isMainOwner());
 		self::assertSame('804', $owners[0]->getCountryId());
 		self::assertFalse($owners[1]->isMainOwner());

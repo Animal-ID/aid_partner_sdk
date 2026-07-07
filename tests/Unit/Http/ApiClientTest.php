@@ -162,9 +162,13 @@ final class ApiClientTest extends TestCase
         $api->get('/v1/partner/dictionaries');
         self::assertSame('2026-05-30', $this->http->lastRequest()->getHeader('X-Eternity-Animal-ID-Version'));
 
+        // With no explicit version the SDK still sends its default target version.
         $api = ApiClientFactory::create($this->http);
         $api->get('/v1/partner/dictionaries');
-        self::assertNull($this->http->lastRequest()->getHeader('X-Eternity-Animal-ID-Version'));
+        self::assertSame(
+            \AnimalId\PartnerSdk\Config::DEFAULT_API_VERSION,
+            $this->http->lastRequest()->getHeader('X-Eternity-Animal-ID-Version')
+        );
     }
 
     public function testExtraHeadersArePassedThrough(): void

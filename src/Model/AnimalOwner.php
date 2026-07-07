@@ -10,8 +10,11 @@ namespace AnimalId\PartnerSdk\Model;
  */
 final class AnimalOwner
 {
-	/** @var int|null Global user id — reuse it in the owner/animal endpoints. */
+	/** @var int|null Legacy numeric owner id (pre-2026-07-04 versions). */
 	private $userGid;
+
+	/** @var string|null Stable public owner identifier; pass this into animal registration. */
+	private $publicId;
 
 	/** @var bool Whether the owner already has a usable account. */
 	private $hasAccount;
@@ -48,6 +51,7 @@ final class AnimalOwner
 	{
 		$owner = new self();
 		$owner->userGid = isset($data['user_gid']) ? (int)$data['user_gid'] : null;
+		$owner->publicId = isset($data['public_id']) ? (string)$data['public_id'] : null;
 		$owner->hasAccount = (bool)($data['has_account'] ?? false);
 		$owner->email = isset($data['email']) ? (string)$data['email'] : null;
 		$owner->phone = isset($data['phone']) ? (string)$data['phone'] : null;
@@ -63,6 +67,15 @@ final class AnimalOwner
 	public function getUserGid(): ?int
 	{
 		return $this->userGid;
+	}
+
+	/**
+	 * Stable public owner identifier. Pass this into animal registration (owners[].public_id)
+	 * on API version >= 2026-07-04.
+	 */
+	public function getPublicId(): ?string
+	{
+		return $this->publicId;
 	}
 
 	public function hasAccount(): bool

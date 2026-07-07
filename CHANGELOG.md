@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-07-07
+
+### Added
+
+- Поле `public_id` у власника: `Owner::getPublicId()` та `AnimalOwner::getPublicId()` — стабільний публічний ідентифікатор власника, що повертається у `owners()->create()`, `owners()->search()` та в розгортанні `owners` на картці тварини.
+- Прив'язка наявного власника при реєстрації тварини за `public_id`: елемент `owners[]` тепер приймає `['public_id' => '...']` (поряд із режимом `user_gid` та inline-реєстрацією за email/phone).
+
+### Changed
+
+- SDK за замовчуванням націлений на версію API `2026-07-04` (`Config::DEFAULT_API_VERSION`, заголовок `X-Eternity-Animal-ID-Version`) — з цієї версії власник у реєстрації прив'язується за `public_id` замість `user_gid`. Щоб зберегти попередню поведінку, задайте `api_version` явно (напр. `['api_version' => '2026-05-30']`).
+
 ## [1.0.2] — 2026-07-02
 
 ### Changed

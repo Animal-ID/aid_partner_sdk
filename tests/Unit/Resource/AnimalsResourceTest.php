@@ -34,7 +34,7 @@ final class AnimalsResourceTest extends TestCase
             'is_microchip' => true,
             'microchip' => '900263000123456',
             'nickname' => 'Барсік',
-            'owners' => [['user_gid' => 90231]],
+            'owners' => [['public_id' => 'V1StGXR8Z5jd']],
         ];
         $id = $this->animals->create($input);
 

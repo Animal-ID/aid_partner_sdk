@@ -15,6 +15,13 @@ final class Config
     const DEFAULT_TIMEOUT = 30;
     const DEFAULT_CONNECT_TIMEOUT = 10;
 
+    /**
+     * API version this SDK targets, sent as X-Eternity-Animal-ID-Version. From this version
+     * owners are attached at registration by `public_id` (not the legacy numeric `user_gid`).
+     * Override via the `api_version` option to pin an older contract.
+     */
+    const DEFAULT_API_VERSION = '2026-07-04';
+
     /** @var string */
     private $appId;
 
@@ -27,7 +34,7 @@ final class Config
     /** @var string */
     private $baseUrl;
 
-    /** @var string|null Date version (YYYY-MM-DD) sent as X-Eternity-Animal-ID-Version. */
+    /** @var string Date version (YYYY-MM-DD) sent as X-Eternity-Animal-ID-Version. */
     private $apiVersion;
 
     /** @var int Total request timeout, seconds. */
@@ -63,7 +70,9 @@ final class Config
         $this->publicKey = $publicKey;
         $this->privateKey = $privateKey;
         $this->baseUrl = rtrim($baseUrl, '/');
-        $this->apiVersion = isset($options['api_version']) ? (string) $options['api_version'] : null;
+        $this->apiVersion = isset($options['api_version'])
+            ? (string) $options['api_version']
+            : self::DEFAULT_API_VERSION;
         $this->timeout = isset($options['timeout']) ? (int) $options['timeout'] : self::DEFAULT_TIMEOUT;
         $this->connectTimeout = isset($options['connect_timeout'])
             ? (int) $options['connect_timeout']
@@ -94,7 +103,7 @@ final class Config
         return $this->baseUrl;
     }
 
-    public function getApiVersion(): ?string
+    public function getApiVersion(): string
     {
         return $this->apiVersion;
     }
