@@ -37,6 +37,9 @@ final class AnimalOwner
 	/** @var bool true for the main owner; false for co-owners. */
 	private $isMainOwner;
 
+	/** @var string|null Your own id for this person, as you sent it. Null if you never did. */
+	private $externalOwnerId;
+
 	/** @var array<string, mixed> Raw payload for forward compatibility. */
 	private $raw;
 
@@ -58,6 +61,9 @@ final class AnimalOwner
 		$owner->displayHint = isset($data['display_hint']) ? (string)$data['display_hint'] : null;
 		$owner->language = isset($data['language']) ? (string)$data['language'] : null;
 		$owner->countryId = isset($data['country_id']) ? (string)$data['country_id'] : null;
+		$owner->externalOwnerId = isset($data['external_owner_id'])
+			? (string)$data['external_owner_id']
+			: null;
 		$owner->isMainOwner = (bool)($data['is_main_owner'] ?? false);
 		$owner->raw = $data;
 
@@ -111,6 +117,17 @@ final class AnimalOwner
 	public function isMainOwner(): bool
 	{
 		return $this->isMainOwner;
+	}
+
+	/**
+	 * Your own identifier for this person, echoed back — null when you never sent one.
+	 *
+	 * Scoped to your integration: you are never handed the id another partner uses for the
+	 * same person.
+	 */
+	public function getExternalOwnerId(): ?string
+	{
+		return $this->externalOwnerId;
 	}
 
 	/**

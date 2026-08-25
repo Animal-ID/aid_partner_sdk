@@ -33,6 +33,9 @@ final class Owner
 	/** @var int|null */
 	private $countryId;
 
+	/** @var string|null Your own id for this person, as you sent it. Null if you never did. */
+	private $externalOwnerId;
+
 	/** @var array<string, mixed> Raw payload for forward compatibility. */
 	private $raw;
 
@@ -54,6 +57,9 @@ final class Owner
 		$owner->displayHint = isset($data['display_hint']) ? (string)$data['display_hint'] : null;
 		$owner->language = isset($data['language']) ? (string)$data['language'] : null;
 		$owner->countryId = isset($data['country_id']) ? (int)$data['country_id'] : null;
+		$owner->externalOwnerId = isset($data['external_owner_id'])
+			? (string)$data['external_owner_id']
+			: null;
 		$owner->raw = $data;
 
 		return $owner;
@@ -101,6 +107,17 @@ final class Owner
 	public function getCountryId(): ?int
 	{
 		return $this->countryId;
+	}
+
+	/**
+	 * Your own identifier for this person, echoed back — null when you never sent one.
+	 *
+	 * Scoped to your integration: you are never handed the id another partner uses for the
+	 * same person.
+	 */
+	public function getExternalOwnerId(): ?string
+	{
+		return $this->externalOwnerId;
 	}
 
 	/**
