@@ -19,6 +19,10 @@ final class OwnersResource extends AbstractResource
 	 *
 	 * Required: one of email/phone, and consent.account_creation = true.
 	 *
+	 * Pass `external_owner_id` to record your own id for this person. It is stored on first
+	 * contact and never overwritten, and comes back on {@see self::search()} and on owners
+	 * embedded through the `owners` expand — so both sides can reconcile the same human later.
+	 *
 	 * @param array<string, mixed> $owner e.g. ['email' => ..., 'consent' => ['account_creation' => true]]
 	 * @param string|null $idempotencyKey Your own key for safe retries; auto-generated when null.
 	 */

@@ -71,7 +71,7 @@ final class AnimalsAccessAndExpandTest extends TestCase
 			'nickname'  => 'Барсік',
 			'abilities' => ['can_edit' => true],
 			'owners'    => [
-				['user_gid' => 90231, 'public_id' => 'V1StGXR8Z5jd', 'is_main_owner' => true, 'display_hint' => 'Ja*** D.', 'country_id' => '804'],
+				['user_gid' => 90231, 'public_id' => 'V1StGXR8Z5jd', 'is_main_owner' => true, 'display_hint' => 'Ja*** D.', 'country_id' => '804', 'external_owner_id' => 'crm-4471'],
 				['user_gid' => 90232, 'is_main_owner' => false],
 			],
 		]]);
@@ -92,6 +92,9 @@ final class AnimalsAccessAndExpandTest extends TestCase
 		self::assertNull($owners[1]->getPublicId());
 		self::assertTrue($owners[0]->isMainOwner());
 		self::assertSame('804', $owners[0]->getCountryId());
+		self::assertSame('crm-4471', $owners[0]->getExternalOwnerId());
+		// A co-owner you never labelled — or one only another partner knows — carries no id.
+		self::assertNull($owners[1]->getExternalOwnerId());
 		self::assertFalse($owners[1]->isMainOwner());
 	}
 

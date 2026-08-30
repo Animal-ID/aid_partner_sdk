@@ -18,6 +18,23 @@ final class WebhookEvent
 	const TYPE_ACCESS_APPROVED = 'animal_access.approved';
 	const TYPE_ACCESS_DENIED = 'animal_access.denied';
 
+	/** A permission you asked for was granted; act on it until it expires. */
+	const TYPE_CONSENT_APPROVED = 'consent.approved';
+
+	/** The person you asked refused. Nothing was granted. */
+	const TYPE_CONSENT_DENIED = 'consent.denied';
+
+	/**
+	 * A permission you had was taken back. For a handed-over key it stops working immediately.
+	 *
+	 * The one outcome you cannot see coming: it can land months after the approval, and without
+	 * this event you would learn of it when your next call starts failing.
+	 */
+	const TYPE_CONSENT_REVOKED = 'consent.revoked';
+
+	/** Nobody answered in time. Not a refusal — you may ask again. */
+	const TYPE_CONSENT_EXPIRED = 'consent.expired';
+
 	/** @var string Unique delivery id (matches the X-Eternity-Webhook-Id header). */
 	private $id;
 
@@ -134,5 +151,72 @@ final class WebhookEvent
 	public function getDecidedAt(): ?string
 	{
 		return isset($this->result['decided_at']) ? (string)$this->result['decided_at'] : null;
+	}
+
+	// --- Typed accessors for the consent.* events --------------------------------------------
+
+	public function isConsentApproved(): bool
+	{
+		return $this->type === self::TYPE_CONSENT_APPROVED;
+	}
+
+	public function isConsentDenied(): bool
+	{
+		return $this->type === self::TYPE_CONSENT_DENIED;
+	}
+
+	/**
+	 * A permission you held was taken back.
+	 *
+	 * Handle this one. It can arrive months after the approval, and a handed-over key stops working
+	 * the moment it does — without the event you would find out when your next call fails.
+	 */
+	public function isConsentRevoked(): bool
+	{
+		return $this->type === self::TYPE_CONSENT_REVOKED;
+	}
+
+	/** Nobody answered in time. Not a refusal — you may ask again. */
+	public function isConsentExpired(): bool
+	{
+		return $this->type === self::TYPE_CONSENT_EXPIRED;
+	}
+
+	public function isConsentEvent(): bool
+	{
+		return $this->isConsentApproved()
+			|| $this->isConsentDenied()
+			|| $this->isConsentRevoked()
+			|| $this->isConsentExpired();
+	}
+
+	/** Public id of the consent request this outcome belongs to, or null. */
+	public function getConsentId(): ?string
+	{
+		return isset($this->result['consent_id']) ? (string)$this->result['consent_id'] : null;
+	}
+
+	/** "key_handover" or "clinic_membership" for consent events, otherwise null. */
+	public function getConsentKind(): ?string
+	{
+		return $this->isConsentEvent() && isset($this->result['kind'])
+			? (string)$this->result['kind']
+			: null;
+	}
+
+	/** Public id of the doctor a key handover concerns; null for a clinic membership. */
+	public function getDoctorId(): ?string
+	{
+		return isset($this->result['doctor_id']) && $this->result['doctor_id'] !== null
+			? (string)$this->result['doctor_id']
+			: null;
+	}
+
+	/** Public id of the clinic a membership concerns; null for a key handover. */
+	public function getClinicId(): ?string
+	{
+		return isset($this->result['clinic_id']) && $this->result['clinic_id'] !== null
+			? (string)$this->result['clinic_id']
+			: null;
 	}
 }

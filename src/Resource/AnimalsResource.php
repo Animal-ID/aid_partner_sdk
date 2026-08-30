@@ -33,6 +33,8 @@ final class AnimalsResource extends AbstractResource
 	 * either `['public_id' => 'V1StGXR8...']` to attach an existing owner (from {@see OwnersResource::search()}),
 	 * or inline `['email' => ..., 'consent' => ['account_creation' => true]]` to register a new one.
 	 * `public_id` attachment requires API version >= 2026-07-04, which this SDK sends by default.
+	 * Inline entries also take `external_owner_id` — your own id for that person, stored once and
+	 * echoed back on later reads.
 	 *
 	 * @param array<string, mixed> $animal
 	 * @param string|null $idempotencyKey Your own key for safe retries; auto-generated when null.

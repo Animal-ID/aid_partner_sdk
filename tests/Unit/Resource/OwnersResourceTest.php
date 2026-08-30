@@ -61,6 +61,35 @@ final class OwnersResourceTest extends TestCase
         self::assertSame(804, $owner->getCountryId());
     }
 
+    public function testExternalOwnerIdIsSentAndEchoedBack(): void
+    {
+        $this->http->queueJson(201, [
+            'payload' => [
+                'user_gid' => 90231,
+                'has_account' => true,
+                'external_owner_id' => 'crm-4471',
+            ],
+        ]);
+
+        $input = [
+            'email' => 'jane@example.com',
+            'external_owner_id' => 'crm-4471',
+            'consent' => ['account_creation' => true],
+        ];
+        $owner = $this->owners->create($input);
+
+        self::assertSame($input, json_decode((string) $this->http->lastRequest()->getBody(), true));
+        self::assertSame('crm-4471', $owner->getExternalOwnerId());
+    }
+
+    public function testOwnerWithoutAnExternalIdReadsAsNull(): void
+    {
+        // Owners you never labelled — and owners another partner labelled — come back without one.
+        $this->http->queueJson(200, ['payload' => ['user_gid' => 90231, 'has_account' => true]]);
+
+        self::assertNull($this->owners->search('jane@example.com')->getExternalOwnerId());
+    }
+
     public function testCreateUnwrapsSingleElementPayloadArray(): void
     {
         // The API may wrap single resources in a one-element payload array.
