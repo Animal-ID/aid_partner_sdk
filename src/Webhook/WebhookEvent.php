@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace AnimalId\PartnerSdk\Webhook;
 
 use AnimalId\PartnerSdk\Exception\WebhookVerificationException;
+use AnimalId\PartnerSdk\Model\Procedure;
 
 /**
  * A decoded webhook delivery from Animal ID.
@@ -34,6 +35,12 @@ final class WebhookEvent
 
 	/** Nobody answered in time. Not a refusal — you may ask again. */
 	const TYPE_CONSENT_EXPIRED = 'consent.expired';
+
+	/** The owner confirmed the procedures you recorded without access — they are verified now. */
+	const TYPE_PROCEDURES_VERIFIED = 'procedures.verified';
+
+	/** The owner declined the procedures you recorded without access — they were removed. */
+	const TYPE_PROCEDURES_REJECTED = 'procedures.rejected';
 
 	/** @var string Unique delivery id (matches the X-Eternity-Webhook-Id header). */
 	private $id;
@@ -151,6 +158,43 @@ final class WebhookEvent
 	public function getDecidedAt(): ?string
 	{
 		return isset($this->result['decided_at']) ? (string)$this->result['decided_at'] : null;
+	}
+
+	// --- Typed accessors for the procedures.* events -----------------------------------------
+	// They also carry animal_id, requester_user_gid and decided_at — see the accessors above.
+
+	public function isProceduresVerified(): bool
+	{
+		return $this->type === self::TYPE_PROCEDURES_VERIFIED;
+	}
+
+	public function isProceduresRejected(): bool
+	{
+		return $this->type === self::TYPE_PROCEDURES_REJECTED;
+	}
+
+	public function isProceduresEvent(): bool
+	{
+		return $this->isProceduresVerified() || $this->isProceduresRejected();
+	}
+
+	/**
+	 * The procedures the owner's decision covered, each with its new verification_status; an empty
+	 * list for other events. A verified procedure's change to the animal (chip, tag, sterilization,
+	 * death) is applied separately and may land after this event.
+	 *
+	 * @return list<Procedure>
+	 */
+	public function getProcedures(): array
+	{
+		$procedures = [];
+		foreach ((array)($this->result['procedures'] ?? []) as $procedure) {
+			if (is_array($procedure)) {
+				$procedures[] = Procedure::fromArray($procedure);
+			}
+		}
+
+		return $procedures;
 	}
 
 	// --- Typed accessors for the consent.* events --------------------------------------------

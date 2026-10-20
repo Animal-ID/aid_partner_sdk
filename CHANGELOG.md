@@ -7,6 +7,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Неверифіковані процедури.** Ветеринар без доступу до тварини тепер може записувати процедури: вони зберігаються неверифікованими, доки власник не вирішить. `Procedure::getVerificationStatus()` / `isVerified()` / `getVerifiedAt()`; `ProcedureBatch::getAccessRequest()` / `isUnverified()` — запит на доступ, під яким записано партію.
+- **Вебхуки `procedures.verified` / `procedures.rejected`** з аксесорами `isProceduresEvent()`, `isProceduresVerified()`, `isProceduresRejected()`, `getProcedures()`.
+
+### Changed
+
+- `ProcedureBatch::getAppointmentId()` повертає `?int`: для неверифікованої партії візит не відкривається, і id дорівнює `null`. Раніше на місці `null` був би `0`.
+
 ## [1.3.0] — 2026-08-27
 
 ### Added
