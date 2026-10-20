@@ -185,6 +185,36 @@ final class WebhookVerifierTest extends TestCase
 		self::assertSame('animal_access.approved', $event->getType());
 	}
 
+	public function testProceduresEventsAreRecognisedWithTheirProcedures(): void
+	{
+		$event = $this->verifier()->parse((string)json_encode([
+			'id'          => 'e-2',
+			'event'       => WebhookEvent::TYPE_PROCEDURES_VERIFIED,
+			'occurred_at' => '2026-05-31T10:00:00+00:00',
+			'result'      => [
+				'animal_id'          => '8xK3pQzVnB7rL2qF',
+				'requester_user_gid' => 90231,
+				'decided_at'         => '2026-05-31T10:00:00+00:00',
+				'procedures'         => [
+					['id' => 99001, 'visit_id' => null, 'type' => 10, 'occurred_at' => '2026-05-30T08:00:00+00:00', 'verification_status' => 'verified'],
+				],
+			],
+		]));
+
+		self::assertTrue($event->isProceduresEvent());
+		self::assertTrue($event->isProceduresVerified());
+		self::assertFalse($event->isAnimalAccessEvent());
+		self::assertSame('8xK3pQzVnB7rL2qF', $event->getAnimalId());
+		self::assertSame(90231, $event->getRequesterUserGid());
+		self::assertCount(1, $event->getProcedures());
+		self::assertSame(99001, $event->getProcedures()[0]->getId());
+		self::assertTrue($event->getProcedures()[0]->isVerified());
+
+		$rejected = $this->verifier()->parse((string)json_encode(['event' => WebhookEvent::TYPE_PROCEDURES_REJECTED, 'result' => []]));
+		self::assertTrue($rejected->isProceduresRejected());
+		self::assertSame([], $rejected->getProcedures());
+	}
+
 	public function testParseRejectsNonEventBody(): void
 	{
 		$this->expectException(WebhookVerificationException::class);

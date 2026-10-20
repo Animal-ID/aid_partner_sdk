@@ -332,8 +332,8 @@ $client->animals()->update($animalId, [
 ```php
 use AnimalId\PartnerSdk\Resource\ProceduresResource;
 
-// Запис однієї процедури або пакета (до 100) — відкриває візит
-// і надає ветеринару зв'язок із твариною.
+// Запис однієї процедури або пакета (до 100). З доступом до тварини — відкриває візит;
+// без доступу — записує процедури неверифікованими (див. нижче).
 $result = $client->procedures()->create($animalId, [
     [
         'type' => ProceduresResource::TYPE_VACCINATION,       // 10
@@ -354,9 +354,15 @@ $result = $client->procedures()->create($animalId, [
     ],
 ]);
 
-echo $result->getAppointmentId();              // id відкритого візиту
+echo $result->getAppointmentId();              // id відкритого візиту (null — без доступу)
 foreach ($result->getProcedures() as $procedure) {
-    echo $procedure->getId(), ': тип ', $procedure->getType(), PHP_EOL;
+    echo $procedure->getId(), ': тип ', $procedure->getType(), ', ', $procedure->getVerificationStatus(), PHP_EOL;
+}
+
+if ($result->isUnverified()) {
+    // Доступу до тварини немає: процедури збережено неверифікованими, візит не відкрито,
+    // а власник отримав лист. Рішення прийде вебхуком procedures.verified / procedures.rejected.
+    $result->getAccessRequest()->getStatus();   // pending
 }
 
 // Історія процедур тварини з фільтрами
@@ -370,6 +376,8 @@ $history = $client->procedures()->listForAnimal(
 // Одна процедура за id
 $procedure = $client->procedures()->get(99001);
 ```
+
+**Без доступу до тварини** (`abilities.can_edit === false`) процедури все одно записуються, але неверифікованими (`Procedure::isVerified() === false`): візит не відкривається, у тварині поки нічого не змінюється (чип, жетон, стерилізація, смерть чекають на власника), а запит на доступ від вашої організації створюється або використовується наявний. Власник одним рішенням погоджує — ви отримуєте доступ, процедури стають верифікованими — або відхиляє, і їх видалено. Поки відмова діє, новий запис для цієї тварини повертає `403` (`AccessDeniedException`). У списку й за id ви бачите лише власні неверифіковані процедури.
 
 Доступні константи типів: `TYPE_VACCINATION` (10), `TYPE_RABIES_VACCINATION` (20), `TYPE_TRANSPONDER_IDENTIFICATION` (30), `TYPE_TOKEN_IDENTIFICATION` (40), `TYPE_DEWORMING` (50), `TYPE_STERILIZATION` (60), `TYPE_EUTHANASIA` (70).
 
@@ -475,6 +483,24 @@ if ($event->isConsentEvent()) {
 
     if ($event->isConsentExpired()) {
         // Ніхто не відповів. Це не відмова — можна спитати ще раз.
+    }
+}
+```
+
+### Події про процедури (`procedures.*`)
+
+Чим закінчилися процедури, які ви записали без доступу до тварини. Надходять на додачу до `animal_access.*`, без гарантованого порядку щодо неї. Зміни, які верифікована процедура вносить у тварину (чип, жетон, стерилізація, смерть), застосовуються окремо й можуть з'явитися трохи пізніше за подію.
+
+```php
+if ($event->isProceduresEvent()) {
+    $event->getAnimalId();          // public_id тварини
+    foreach ($event->getProcedures() as $procedure) {
+        $procedure->getId();
+        $procedure->isVerified();   // true — procedures.verified, false — procedures.rejected
+    }
+
+    if ($event->isProceduresRejected()) {
+        // Власник відхилив: ці процедури видалено.
     }
 }
 ```

@@ -105,6 +105,53 @@ final class ModelsTest extends TestCase
         self::assertSame([], $procedure->toArray());
     }
 
+    public function testProcedureCarriesItsVerificationStatus(): void
+    {
+        $unverified = Procedure::fromArray(['id' => 1, 'verification_status' => 'unverified', 'verified_at' => null]);
+        $confirmed = Procedure::fromArray([
+            'id' => 2,
+            'verification_status' => 'verified',
+            'verified_at' => '2026-05-31T10:00:00+00:00',
+        ]);
+        $older = Procedure::fromArray(['id' => 3]);
+
+        self::assertFalse($unverified->isVerified());
+        self::assertSame(Procedure::STATUS_UNVERIFIED, $unverified->getVerificationStatus());
+        self::assertNull($unverified->getVerifiedAt());
+        self::assertTrue($confirmed->isVerified());
+        self::assertSame('2026-05-31T10:00:00+00:00', $confirmed->getVerifiedAt());
+        self::assertTrue($older->isVerified(), 'a gateway without the field answered verified procedures only');
+    }
+
+    public function testAnUnverifiedBatchHasNoVisitAndCarriesItsAccessRequest(): void
+    {
+        $batch = ProcedureBatch::fromArray([
+            'appointment_id' => null,
+            'procedures' => [['id' => 1, 'visit_id' => null, 'verification_status' => 'unverified']],
+            'access_request' => [
+                'status' => 'pending',
+                'requested_at' => '2026-05-30T08:00:00+00:00',
+                'expires_at' => '2026-06-06T08:00:00+00:00',
+                'retry_after_seconds' => 604800,
+            ],
+        ]);
+
+        self::assertNull($batch->getAppointmentId());
+        self::assertTrue($batch->isUnverified());
+        self::assertNotNull($batch->getAccessRequest());
+        self::assertSame('pending', $batch->getAccessRequest()->getStatus());
+        self::assertFalse($batch->getProcedures()[0]->isVerified());
+    }
+
+    public function testAVerifiedBatchHasNoAccessRequest(): void
+    {
+        $batch = ProcedureBatch::fromArray(['appointment_id' => 7741, 'procedures' => [], 'access_request' => null]);
+
+        self::assertSame(7741, $batch->getAppointmentId());
+        self::assertFalse($batch->isUnverified());
+        self::assertNull($batch->getAccessRequest());
+    }
+
     public function testProcedureBatchSkipsMalformedEntries(): void
     {
         $batch = ProcedureBatch::fromArray([

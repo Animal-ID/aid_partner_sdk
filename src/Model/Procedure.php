@@ -9,9 +9,15 @@ namespace AnimalId\PartnerSdk\Model;
  * (type / occurred_at / visit_id / type_specific_payload); older gateways
  * answered POST with an internal shape (procedure_type_id / performed_at /
  * extra_fields), which fromArray() still normalizes for compatibility.
+ *
+ * A procedure recorded without access to the animal is "unverified" until the owner decides:
+ * approving your access request verifies it, declining removes it.
  */
 final class Procedure
 {
+	const STATUS_VERIFIED = 'verified';
+	const STATUS_UNVERIFIED = 'unverified';
+
 	/** @var int */
 	private $id;
 
@@ -35,6 +41,12 @@ final class Procedure
 
 	/** @var array<string, mixed> */
 	private $typeSpecificPayload;
+
+	/** @var string "verified" or "unverified". */
+	private $verificationStatus;
+
+	/** @var string|null ISO 8601 — when the owner confirmed it; null if recorded with access or unverified. */
+	private $verifiedAt;
 
 	/** @var array<string, mixed> Raw payload for forward compatibility. */
 	private $raw;
@@ -66,6 +78,12 @@ final class Procedure
 
 		$payload = $data['type_specific_payload'] ?? ($data['extra_fields'] ?? []);
 		$procedure->typeSpecificPayload = is_array($payload) ? $payload : [];
+
+		// Gateways older than the verification status answered verified procedures only.
+		$procedure->verificationStatus = isset($data['verification_status'])
+			? (string)$data['verification_status']
+			: self::STATUS_VERIFIED;
+		$procedure->verifiedAt = isset($data['verified_at']) ? (string)$data['verified_at'] : null;
 
 		$procedure->raw = $data;
 
@@ -116,6 +134,24 @@ final class Procedure
 	public function getTypeSpecificPayload(): array
 	{
 		return $this->typeSpecificPayload;
+	}
+
+	/** "verified" or "unverified". */
+	public function getVerificationStatus(): string
+	{
+		return $this->verificationStatus;
+	}
+
+	/** Recorded with access to the animal, or confirmed by the owner. */
+	public function isVerified(): bool
+	{
+		return $this->verificationStatus === self::STATUS_VERIFIED;
+	}
+
+	/** ISO 8601 time the owner confirmed it; null when recorded with access or still unverified. */
+	public function getVerifiedAt(): ?string
+	{
+		return $this->verifiedAt;
 	}
 
 	/**
