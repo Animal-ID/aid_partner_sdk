@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-10-20
+
 ### Added
 
 - **Неверифіковані процедури.** Ветеринар без доступу до тварини тепер може записувати процедури: вони зберігаються неверифікованими, доки власник не вирішить. `Procedure::getVerificationStatus()` / `isVerified()` / `getVerifiedAt()`; `ProcedureBatch::getAccessRequest()` / `isUnverified()` — запит на доступ, під яким записано партію.
